@@ -2,6 +2,7 @@ import React from "react";
 import { Dog, Footprints, Utensils, ShowerHead, StickyNote } from "lucide-react";
 import { Button } from "../ui/button";
 import { cn } from "../ui/utils";
+import { motion } from "motion/react";
 
 export type ActionType = "walk" | "poop" | "feed" | "bath" | "note";
 
@@ -20,7 +21,7 @@ export function QuickActions({ onAction }: QuickActionsProps) {
     {
       id: "poop",
       label: "Poop",
-      icon: Dog, // Using Dog as a placeholder for poop if no better icon, or maybe combine icons
+      icon: Dog,
       color: "bg-[#Dfb065] hover:bg-[#cda25e] text-white",
     },
     {
@@ -43,23 +44,44 @@ export function QuickActions({ onAction }: QuickActionsProps) {
     },
   ];
 
+  const container = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.05
+      }
+    }
+  };
+
+  const item = {
+    hidden: { opacity: 0, y: 10 },
+    show: { opacity: 1, y: 0 }
+  };
+
   return (
     <div className="w-full py-4 overflow-x-auto no-scrollbar">
-      <div className="flex gap-3 md:gap-4 min-w-max px-1">
+      <motion.div 
+        variants={container}
+        initial="hidden"
+        animate="show"
+        className="flex gap-3 md:gap-4 min-w-max px-1 pb-2"
+      >
         {actions.map((action) => (
-          <Button
-            key={action.id}
-            onClick={() => onAction(action.id as ActionType)}
-            className={cn(
-              "h-14 md:h-16 px-6 md:px-8 rounded-full shadow-sm border-0 transition-all active:scale-95 flex items-center gap-3",
-              action.color
-            )}
-          >
-            <action.icon className="h-5 w-5 md:h-6 md:w-6" />
-            <span className="text-base md:text-lg font-medium">{action.label}</span>
-          </Button>
+          <motion.div key={action.id} variants={item}>
+            <Button
+              onClick={() => onAction(action.id as ActionType)}
+              className={cn(
+                "h-14 md:h-16 px-6 md:px-8 rounded-full shadow-sm border-0 transition-all active:scale-95 flex items-center gap-3",
+                action.color
+              )}
+            >
+              <action.icon className="h-5 w-5 md:h-6 md:w-6" />
+              <span className="text-base md:text-lg font-medium">{action.label}</span>
+            </Button>
+          </motion.div>
         ))}
-      </div>
+      </motion.div>
     </div>
   );
 }

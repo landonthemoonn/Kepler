@@ -1,12 +1,11 @@
 import React, { useRef, useState, useEffect } from "react";
-import { Map, Undo2, Eraser, Clock, User, Pencil } from "lucide-react";
+import { Map, Undo2, Eraser, Clock, User, Pencil, Check } from "lucide-react";
 import { Button } from "../ui/button";
 import { Switch } from "../ui/switch";
 import { Label } from "../ui/label";
 import { Card } from "../ui/card";
 import { cn } from "../ui/utils";
 
-// Visual-only WalkCard - No Leaflet dependencies
 interface Point {
   x: number;
   y: number;
@@ -26,14 +25,20 @@ export function WalkCard({ paths: initialPaths = [], onUpdate, onDelete }: WalkC
   const [paths, setPaths] = useState<Point[][]>(initialPaths);
   const [currentPath, setCurrentPath] = useState<Point[]>([]);
 
-  // Placeholder map image
+  // Placeholder map image (visual only)
   const MAP_IMAGE = "https://images.unsplash.com/photo-1730317195705-8a265a59ed1b?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxsaWdodCUyMGNvbG9yZWQlMjBjaXR5JTIwcGFyayUyMG1hcCUyMGlsbHVzdHJhdGlvbiUyMG5ldXRyYWx8ZW58MXx8fHwxNzY1ODE0NDAwfDA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral";
 
+  const onUpdateRef = useRef(onUpdate);
+
   useEffect(() => {
-    if (onUpdate) {
-      onUpdate({ paths });
+    onUpdateRef.current = onUpdate;
+  }, [onUpdate]);
+
+  useEffect(() => {
+    if (onUpdateRef.current) {
+      onUpdateRef.current({ paths });
     }
-  }, [paths, onUpdate]);
+  }, [paths]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -66,13 +71,26 @@ export function WalkCard({ paths: initialPaths = [], onUpdate, onDelete }: WalkC
     ctx.lineJoin = "round";
     ctx.lineWidth = 4;
     ctx.strokeStyle = "#8B9BB4"; 
+    
+    // Add shadow/glow
+    ctx.shadowBlur = 2;
+    ctx.shadowColor = "rgba(139, 155, 180, 0.5)";
 
     const drawPath = (path: Point[]) => {
       if (path.length < 2) return;
       ctx.beginPath();
       ctx.moveTo(path[0].x, path[0].y);
-      for (let i = 1; i < path.length; i++) {
-        ctx.lineTo(path[i].x, path[i].y);
+      // Smooth curve
+      for (let i = 1; i < path.length - 1; i++) {
+        const xc = (path[i].x + path[i + 1].x) / 2;
+        const yc = (path[i].y + path[i + 1].y) / 2;
+        ctx.quadraticCurveTo(path[i].x, path[i].y, xc, yc);
+      }
+      // Draw last segment
+      if (path.length > 2) {
+          ctx.lineTo(path[path.length - 1].x, path[path.length - 1].y);
+      } else {
+          ctx.lineTo(path[1].x, path[1].y);
       }
       ctx.stroke();
     };
@@ -127,7 +145,7 @@ export function WalkCard({ paths: initialPaths = [], onUpdate, onDelete }: WalkC
   };
 
   return (
-    <Card className="overflow-hidden border-0 shadow-[0_2px_8px_rgba(0,0,0,0.04)] bg-white rounded-2xl mb-4">
+    <Card className="overflow-hidden border-0 shadow-[0_4px_16px_rgba(0,0,0,0.04)] bg-white rounded-2xl mb-4 transition-all hover:shadow-[0_8px_24px_rgba(0,0,0,0.06)]">
       <div className="p-4 md:p-6 space-y-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -155,7 +173,10 @@ export function WalkCard({ paths: initialPaths = [], onUpdate, onDelete }: WalkC
         {/* Visual Map Placeholder */}
         <div 
           ref={containerRef}
-          className="relative h-48 md:h-64 rounded-xl overflow-hidden bg-gray-100 touch-none"
+          className={cn(
+            "relative h-48 md:h-64 rounded-xl overflow-hidden bg-gray-100 touch-none transition-all duration-300",
+            drawingEnabled ? "ring-2 ring-[#8CA99B] ring-offset-2" : ""
+          )}
         >
           {/* Background Image */}
           <div 
@@ -166,9 +187,10 @@ export function WalkCard({ paths: initialPaths = [], onUpdate, onDelete }: WalkC
           {/* Overlay Text */}
           {paths.length === 0 && !drawingEnabled && (
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-              <p className="bg-white/80 backdrop-blur-sm px-4 py-2 rounded-full text-sm font-medium text-gray-600 shadow-sm animate-pulse">
-                Draw route with your finger
-              </p>
+              <div className="bg-white/90 backdrop-blur-md px-4 py-2 rounded-full text-sm font-medium text-gray-600 shadow-sm animate-pulse flex items-center gap-2">
+                 <Pencil className="w-3.5 h-3.5" />
+                 <span>Draw route</span>
+              </div>
             </div>
           )}
 
@@ -194,11 +216,26 @@ export function WalkCard({ paths: initialPaths = [], onUpdate, onDelete }: WalkC
                 id="draw-mode" 
                 checked={drawingEnabled}
                 onCheckedChange={setDrawingEnabled}
-                className="data-[state=checked]:bg-[#8B9BB4]"
+                className="data-[state=checked]:bg-[#8CA99B]"
               />
-              <Label htmlFor="draw-mode" className="text-sm font-medium text-gray-600 flex items-center gap-1.5 cursor-pointer">
-                <Pencil className="h-3.5 w-3.5" />
-                Draw Route
+              <Label 
+                htmlFor="draw-mode" 
+                className={cn(
+                  "text-sm font-medium flex items-center gap-1.5 cursor-pointer transition-colors",
+                  drawingEnabled ? "text-[#8CA99B]" : "text-gray-600"
+                )}
+              >
+                {drawingEnabled ? (
+                  <>
+                    <Pencil className="h-3.5 w-3.5" />
+                    Drawing Mode
+                  </>
+                ) : (
+                  <>
+                    <Map className="h-3.5 w-3.5" />
+                    View Mode
+                  </>
+                )}
               </Label>
             </div>
           </div>
@@ -209,7 +246,7 @@ export function WalkCard({ paths: initialPaths = [], onUpdate, onDelete }: WalkC
               size="sm" 
               onClick={handleUndo}
               disabled={paths.length === 0}
-              className="h-8 text-xs font-medium text-gray-600"
+              className="h-8 text-xs font-medium text-gray-600 hover:text-[#333333] hover:bg-gray-100"
             >
               <Undo2 className="h-3.5 w-3.5 mr-1" />
               Undo
@@ -219,7 +256,7 @@ export function WalkCard({ paths: initialPaths = [], onUpdate, onDelete }: WalkC
               size="sm" 
               onClick={handleClear}
               disabled={paths.length === 0}
-              className="h-8 text-xs font-medium text-gray-600"
+              className="h-8 text-xs font-medium text-gray-600 hover:text-[#333333] hover:bg-gray-100"
             >
               <Eraser className="h-3.5 w-3.5 mr-1" />
               Clear

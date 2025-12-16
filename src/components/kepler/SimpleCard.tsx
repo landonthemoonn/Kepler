@@ -14,11 +14,17 @@ interface SimpleCardProps {
 export function SimpleCard({ type, note: initialNote = "", onUpdate, onDelete }: SimpleCardProps) {
   const [note, setNote] = useState(initialNote);
 
+  const onUpdateRef = React.useRef(onUpdate);
+
+  React.useEffect(() => {
+    onUpdateRef.current = onUpdate;
+  }, [onUpdate]);
+
   useEffect(() => {
-    if (onUpdate) {
-      onUpdate({ note });
+    if (onUpdateRef.current) {
+      onUpdateRef.current({ note });
     }
-  }, [note, onUpdate]);
+  }, [note]);
 
   const config = {
     feed: {
@@ -28,6 +34,7 @@ export function SimpleCard({ type, note: initialNote = "", onUpdate, onDelete }:
       iconColor: "text-[#8B9BB4]",
       title: "Feeding",
       placeholder: "What did Kepler eat?",
+      ring: "focus-visible:ring-[#8B9BB4]/50"
     },
     bath: {
       icon: ShowerHead,
@@ -36,6 +43,7 @@ export function SimpleCard({ type, note: initialNote = "", onUpdate, onDelete }:
       iconColor: "text-[#A8A29E]",
       title: "Bath & Grooming",
       placeholder: "Shampoo used, mood, etc.",
+      ring: "focus-visible:ring-[#A8A29E]/50"
     },
     note: {
       icon: StickyNote,
@@ -44,13 +52,14 @@ export function SimpleCard({ type, note: initialNote = "", onUpdate, onDelete }:
       iconColor: "text-[#333333]",
       title: "Daily Note",
       placeholder: "How is Kepler feeling today?",
+      ring: "focus-visible:ring-gray-300"
     }
   }[type];
 
   const Icon = config.icon;
 
   return (
-    <Card className="overflow-hidden border-0 shadow-[0_2px_8px_rgba(0,0,0,0.04)] bg-white rounded-2xl mb-4">
+    <Card className="overflow-hidden border-0 shadow-[0_4px_16px_rgba(0,0,0,0.04)] bg-white rounded-2xl mb-4 transition-all hover:shadow-[0_8px_24px_rgba(0,0,0,0.06)]">
       <div className="p-4 md:p-6 space-y-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -75,7 +84,7 @@ export function SimpleCard({ type, note: initialNote = "", onUpdate, onDelete }:
         <div className="space-y-2">
            <Textarea 
              placeholder={config.placeholder}
-             className="bg-gray-50 border-0 resize-none focus-visible:ring-1 focus-visible:ring-gray-300" 
+             className={`bg-gray-50/50 border-0 resize-none focus-visible:ring-1 ${config.ring} min-h-[80px] rounded-xl`}
              rows={3}
              value={note}
              onChange={(e) => setNote(e.target.value)}

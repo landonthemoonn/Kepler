@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useCallback } from "react";
 import { Header } from "./components/kepler/Header";
 import { QuickActions, ActionType } from "./components/kepler/QuickActions";
 import { WalkCard } from "./components/kepler/WalkCard";
@@ -8,6 +8,7 @@ import { EmptyState } from "./components/kepler/EmptyState";
 import { StatsView } from "./components/kepler/StatsView";
 import { motion, AnimatePresence } from "motion/react";
 import { Calendar, BarChart2 } from "lucide-react";
+import { Toaster, toast } from "sonner@2.0.3";
 
 // Types for our log entries
 interface LogEntry {
@@ -33,16 +34,18 @@ export default function App() {
     };
     // Add to top of list
     setLogs((prev) => [newLog, ...prev]);
+    toast.success(`Added ${type} log`);
   };
 
-  const handleUpdateLog = (id: string, data: Partial<LogEntry>) => {
+  const handleUpdateLog = useCallback((id: string, data: Partial<LogEntry>) => {
     setLogs((prev) => 
       prev.map((log) => (log.id === id ? { ...log, ...data } : log))
     );
-  };
+  }, []);
 
   const handleDeleteLog = (id: string) => {
     setLogs((prev) => prev.filter((log) => log.id !== id));
+    toast.info("Log deleted");
   };
 
   // Dog Avatar
@@ -50,7 +53,8 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-[#FDFCF8] font-sans text-[#333333] selection:bg-[#8CA99B]/20">
-      <div className="max-w-xl mx-auto min-h-screen flex flex-col shadow-2xl shadow-[#000000]/5 bg-[#FDFCF8]">
+      <Toaster position="top-center" />
+      <div className="max-w-2xl mx-auto min-h-screen flex flex-col shadow-2xl shadow-[#000000]/5 bg-[#FDFCF8]">
         
         {/* Sticky Header area */}
         <div className="sticky top-0 z-10 bg-[#FDFCF8]/90 backdrop-blur-md border-b border-gray-100/50">
@@ -122,10 +126,10 @@ export default function App() {
         </div>
 
         {/* Bottom Navigation */}
-        <div className="fixed bottom-0 left-0 right-0 max-w-xl mx-auto bg-white border-t border-gray-100 flex items-center justify-around py-4 z-40 pb-6 md:pb-4">
+        <div className="fixed bottom-0 left-0 right-0 max-w-2xl mx-auto bg-white border-t border-gray-100 flex items-center justify-around py-4 z-40 pb-6 md:pb-4">
           <button
             onClick={() => setView("log")}
-            className={`flex flex-col items-center gap-1 ${view === "log" ? "text-[#8CA99B]" : "text-gray-400"}`}
+            className={`flex flex-col items-center gap-1 transition-colors ${view === "log" ? "text-[#8CA99B]" : "text-gray-400 hover:text-gray-600"}`}
           >
             <Calendar className="w-6 h-6" />
             <span className="text-xs font-medium">Daily Log</span>
@@ -133,7 +137,7 @@ export default function App() {
           
           <button
             onClick={() => setView("stats")}
-            className={`flex flex-col items-center gap-1 ${view === "stats" ? "text-[#8CA99B]" : "text-gray-400"}`}
+            className={`flex flex-col items-center gap-1 transition-colors ${view === "stats" ? "text-[#8CA99B]" : "text-gray-400 hover:text-gray-600"}`}
           >
             <BarChart2 className="w-6 h-6" />
             <span className="text-xs font-medium">Trends</span>

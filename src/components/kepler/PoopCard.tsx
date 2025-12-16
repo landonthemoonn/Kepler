@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { Clock, Dog } from "lucide-react";
 import { Button } from "../ui/button";
 import { Card } from "../ui/card";
@@ -16,12 +16,18 @@ export function PoopCard({ consistency: initialConsistency = 3, note: initialNot
   const [consistency, setConsistency] = useState<number>(initialConsistency);
   const [note, setNote] = useState<string>(initialNote);
   
+  const onUpdateRef = React.useRef(onUpdate);
+
+  React.useEffect(() => {
+    onUpdateRef.current = onUpdate;
+  }, [onUpdate]);
+  
   // Sync with parent
-  useEffect(() => {
-    if (onUpdate) {
-      onUpdate({ consistency, note });
+  React.useEffect(() => {
+    if (onUpdateRef.current) {
+      onUpdateRef.current({ consistency, note });
     }
-  }, [consistency, note, onUpdate]);
+  }, [consistency, note]);
 
   const levels = [
     { val: 1, label: "Watery", color: "bg-[#Dfb065] opacity-40", size: "w-6 h-6" },
@@ -32,7 +38,7 @@ export function PoopCard({ consistency: initialConsistency = 3, note: initialNot
   ];
 
   return (
-    <Card className="overflow-hidden border-0 shadow-[0_2px_8px_rgba(0,0,0,0.04)] bg-white rounded-2xl mb-4">
+    <Card className="overflow-hidden border-0 shadow-[0_4px_16px_rgba(0,0,0,0.04)] bg-white rounded-2xl mb-4 transition-all hover:shadow-[0_8px_24px_rgba(0,0,0,0.06)]">
       <div className="p-4 md:p-6 space-y-5">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -57,7 +63,7 @@ export function PoopCard({ consistency: initialConsistency = 3, note: initialNot
         {/* Consistency Selector */}
         <div className="space-y-3">
           <label className="text-sm font-medium text-gray-500 uppercase tracking-wide">Consistency</label>
-          <div className="flex items-end justify-between px-2 py-4 bg-gray-50 rounded-xl">
+          <div className="flex items-end justify-between px-2 py-4 bg-gray-50 rounded-xl border border-gray-100/50">
             {levels.map((level) => (
               <div key={level.val} className="flex flex-col items-center gap-2">
                 <button
@@ -67,14 +73,14 @@ export function PoopCard({ consistency: initialConsistency = 3, note: initialNot
                     level.size,
                     level.color,
                     consistency === level.val 
-                      ? "ring-4 ring-[#Dfb065]/20 scale-110" 
-                      : "hover:scale-105"
+                      ? "ring-4 ring-[#Dfb065]/20 scale-110 shadow-sm" 
+                      : "hover:scale-105 opacity-80 hover:opacity-100"
                   )}
                   aria-label={level.label}
                 />
                 <span className={cn(
-                  "text-xs transition-colors",
-                  consistency === level.val ? "font-bold text-[#Dfb065]" : "text-gray-400"
+                  "text-xs transition-colors font-medium",
+                  consistency === level.val ? "text-[#Dfb065]" : "text-gray-400"
                 )}>
                   {level.label}
                 </span>
@@ -87,7 +93,7 @@ export function PoopCard({ consistency: initialConsistency = 3, note: initialNot
         <div className="space-y-2">
            <Textarea 
              placeholder="Add notes..." 
-             className="bg-gray-50 border-0 resize-none focus-visible:ring-1 focus-visible:ring-[#Dfb065]/50" 
+             className="bg-gray-50/50 border-0 resize-none focus-visible:ring-1 focus-visible:ring-[#Dfb065]/50 min-h-[60px] rounded-xl" 
              rows={2}
              value={note}
              onChange={(e) => setNote(e.target.value)}
